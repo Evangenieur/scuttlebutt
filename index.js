@@ -6,7 +6,7 @@ var serializer = require('stream-serializer')
 var u = require('./util')
 var timestamp = require('monotonic-timestamp')
 
-exports = 
+exports =
 module.exports = Scuttlebutt
 
 exports.createID = u.createID
@@ -19,7 +19,7 @@ function dutyOfSubclass() {
 }
 
 function validate (data) {
-  if(!(Array.isArray(data) 
+  if(!(Array.isArray(data)
     && 'string' === typeof data[2]
     && '__proto__'     !== data[2] //THIS WOULD BREAK STUFF
     && 'number' === typeof data[1]
@@ -66,19 +66,20 @@ sb._update = function (update) {
   //if this message is old for it's source,
   //ignore it. it's out of order.
   //each node must emit it's changes in order!
-  
-  var latest = this.sources[source]
-  if(latest && latest >= ts)
+
+  var src_id = source + "." + update[0][0]
+  var latest = this.sources[src_id]
+  if(latest && latest >= ts) 
     return emit.call(this, 'old_data', update), false
 
-  this.sources[source] = ts
+  this.sources[src_id] = ts
 
   var self = this
   function didVerification (err, verified) {
 
     // I'm not sure how what should happen if a async verification
     // errors. if it's an key not found - that is a verification fail,
-    // not a error. if it's genunie error, really you should queue and 
+    // not a error. if it's genunie error, really you should queue and
     // try again? or replay the message later
     // -- this should be done my the security plugin though, not scuttlebutt.
 
@@ -146,17 +147,16 @@ sb.createStream = function (opts) {
     }
 
     sources = data.clock
-
     i.each(self.history(sources), function (data) {d._data(data)})
 
     //the _update listener must be set after the history is queued.
     //otherwise there is a race between the first client message
     //and the next update (which may come in on another stream)
-    //this problem will probably not be encountered until you have 
+    //this problem will probably not be encountered until you have
     //thousands of scuttlebutts.
-        
+
     self.on('_update', onUpdate)
-    
+
     d._data('SYNC')
     syncSent = true
     //when we have sent all history
@@ -208,13 +208,14 @@ sb.createStream = function (opts) {
   function onUpdate (update) { //value, source, ts
     if(!validate(update) || !u.filter(update, sources))
       return
-
     d._data(update)
 
     //really, this should happen before emitting.
     var ts = update[1]
     var source = update[2]
-    sources[source] = ts
+    var src_id = source + "." + update[0][0]
+
+    sources[src_id] = ts
   }
 
   function dispose () {
@@ -311,4 +312,3 @@ sb.clone = function () {
 
   return B
 }
-
