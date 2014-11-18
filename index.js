@@ -63,13 +63,15 @@ sb._update = function (update) {
   //validated when it comes into the stream
   var ts = update[1]
   var source = update[2]
+  var src_id = source
   //if this message is old for it's source,
   //ignore it. it's out of order.
   //each node must emit it's changes in order!
 
-  var src_id = source + "." + update[0][0]
+  if (update[0])
+   src_id = source + "." + update[0][0]
   var latest = this.sources[src_id]
-  if(latest && latest >= ts) 
+  if(latest && latest >= ts)
     return emit.call(this, 'old_data', update), false
 
   this.sources[src_id] = ts
@@ -213,7 +215,10 @@ sb.createStream = function (opts) {
     //really, this should happen before emitting.
     var ts = update[1]
     var source = update[2]
-    var src_id = source + "." + update[0][0]
+    var src_id = source
+
+    if (update[0])
+      src_id = source + "." + update[0][0]
 
     sources[src_id] = ts
   }
